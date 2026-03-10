@@ -171,3 +171,23 @@ Covers: product creation, unique SKU constraint, soft delete, category relations
 **`category_id` as foreign key with cascade** — ensures referential integrity at the database level, not just at the application level.
 
 ---
+
+## What would I improve with 1 million products?
+
+**Database indexes**
+Add indexes on `name`, `sku`, and `category_id`. Without them, every search performs a full table scan over a million records.
+
+**Full-text search**
+Replace `LIKE '%search%'` queries with **Meilisearch or Elasticsearch**. Leading wildcard LIKE queries cannot use indexes and become unviable at scale.
+
+**Redis cache**
+Cache paginated results with a short TTL (30–60 seconds). Most users browse the same pages — no need to hit the database on every request.
+
+**Read replica**
+Route all GET queries to a read-only replica. 90% of catalog traffic is reads — this frees the primary instance for writes only.
+
+**Async audit logging**
+Move `audit_logs` writes to a **queue with Laravel Horizon**. Currently every create/update/delete performs two synchronous DB writes. With queues, the request responds immediately and the log is written in the background.
+
+**API versioning**
+Add `/api/v1/` prefix from the start. With multiple clients consuming the API, versioning allows breaking changes without affecting existing consumers.
