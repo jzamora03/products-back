@@ -1,59 +1,173 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Products API — Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+RESTful API built with Laravel 11 for managing a product catalog with categories, soft deletes, audit logging, and Bearer Token authentication.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Laravel 11** — PHP framework
+- **MySQL 8** — relational database
+- **Eloquent ORM** — models, relationships, soft deletes
+- **Laravel Observer** — automatic audit logging
+- **PHPUnit** — unit testing
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Project Structure
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```
+app/
+├── Http/
+│   ├── Controllers/Api/
+│   │   ├── ProductController.php    # CRUD endpoints
+│   │   └── CategoryController.php  # Category listing
+│   ├── Middleware/
+│   │   └── BearerTokenAuth.php     # Simple Bearer token guard
+│   └── Requests/
+│       ├── StoreProductRequest.php  # Validation rules for create
+│       └── UpdateProductRequest.php # Validation rules for update
+├── Models/
+│   ├── Product.php                  # SoftDeletes, category relationship
+│   ├── Category.php
+│   └── AuditLog.php
+├── Observers/
+│   └── ProductObserver.php         # Logs created/updated/deleted
+└── Providers/
+    └── AppServiceProvider.php      # Registers observer
+database/
+├── migrations/                     # categories, products, audit_logs
+└── seeders/
+    └── DatabaseSeeder.php          # Sample data
+tests/
+└── Unit/
+    └── ProductTest.php             # 4 unit tests
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Getting Started
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Prerequisites
 
-### Premium Partners
+- PHP 8.2+
+- Composer
+- MySQL 8+
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Installation
 
-## Contributing
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Environment Variables
 
-## Code of Conduct
+Edit `.env` with your database credentials:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=products_db
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Security Vulnerabilities
+BEARER_TOKEN=mytoken123
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Database Setup
 
-## License
+```bash
+php artisan migrate --seed
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Run Server
+
+```bash
+php artisan serve
+```
+
+API available at: `http://localhost:8000/api`
+
+---
+
+## Authentication
+
+All endpoints require a Bearer token in the request header:
+
+```
+Authorization: Bearer mytoken123
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/products` | Paginated product list |
+| GET | `/api/products?search=burger` | Search by name or SKU |
+| GET | `/api/products?category_id=1` | Filter by category |
+| GET | `/api/products/{id}` | Single product with category |
+| POST | `/api/products` | Create product |
+| PUT | `/api/products/{id}` | Update product |
+| DELETE | `/api/products/{id}` | Soft delete product |
+| GET | `/api/categories` | List all categories |
+
+### Example Response — GET /api/products
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Coca Cola 500ml",
+      "sku": "BEV-001",
+      "price": "1.50",
+      "stock": 200,
+      "category": {
+        "id": 1,
+        "name": "Beverages",
+        "slug": "beverages"
+      },
+      "created_at": "2024-01-01 00:00:00"
+    }
+  ],
+  "pagination": {
+    "total": 5,
+    "per_page": 10,
+    "current_page": 1,
+    "last_page": 1,
+    "from": 1,
+    "to": 5
+  }
+}
+```
+
+---
+
+## Running Tests
+
+```bash
+php artisan test
+```
+
+Covers: product creation, unique SKU constraint, soft delete, category relationship.
+
+---
+
+## Design Decisions
+
+**Soft Deletes** — products are never permanently removed. Deleted records remain in the database with a `deleted_at` timestamp, preserving historical data and audit trails.
+
+**Observer pattern for audit logging** — `ProductObserver` automatically logs every create, update, and delete to `audit_logs` without polluting controller logic. Controllers stay focused on HTTP concerns only.
+
+**Form Request classes** — validation lives in `StoreProductRequest` and `UpdateProductRequest`, not in the controller. The update request correctly ignores the current product's own SKU when checking uniqueness.
+
+**Bearer Token middleware** — simple token auth applied at the route group level. Token is stored in `.env` and never hardcoded.
+
+**`category_id` as foreign key with cascade** — ensures referential integrity at the database level, not just at the application level.
+
+---
